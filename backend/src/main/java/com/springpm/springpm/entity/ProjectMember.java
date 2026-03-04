@@ -16,13 +16,22 @@ import java.util.UUID;
 @Builder
 public class ProjectMember {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(name = "project_id", nullable = false)
     private UUID projectId;
 
-    @Column(nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", nullable = false, insertable = false, updatable = false)
+    private Project project;
+
+    @Column(name = "user_id", nullable = false)
     private UUID userId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, insertable = false, updatable = false)
+    private User user;
 
     @Column(name = "joined_at", nullable = false)
     private LocalDateTime joinedAt;
