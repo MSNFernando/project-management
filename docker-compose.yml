@@ -1,0 +1,159 @@
+services:
+  # --- Data stores ----------------------------------------------
+  postgres:
+    image: postgres:16-bookworm
+    labels:
+      com.springpm.service: postgres
+      com.springpm.layer: data
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    labels:
+      com.springpm.service: redis
+      com.springpm.layer: data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # --- Messaging ----------------------------------------------
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    labels:
+      com.springpm.service: zookeeper
+      com.springpm.layer: data
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_4LW_COMMANDS_WHITELIST: "ruok,conf,cons,stat"
+    healthcheck:
+      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181", "|", "grep", "imok"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    labels:
+      com.springpm.service: kafka
+      com.springpm.layer: data
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+     #KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka-init:
+    container_name: ve-kafka-init
+    image: confluentinc/cp-kafka:7.6.1
+    labels:
+      com.springpm.service: kafka-init
+      com.springpm.layer: streaming
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    restart: "no"
+    command: |
+      "
+      echo 'Waiting for Kafka to be ready...';
+      while ! kafka-topics --bootstrap-server kafka:9092 --list > /dev/null 2>&1; do
+        sleep 5;
+      done;
+      echo 'Kafka is ready. Creating topics...';
+      kafka-topics --bootstrap-server kafka:9092 --create --topic user-events --partitions 3 --replication-factor 1;
+      kafka-topics --bootstrap-server kafka:9092 --create --topic order-events --partitions 3 --replication-factor 1;
+      echo 'Topics created successfully.';
+      "
+
+  # --- Object storage ----------------------------------------------
+  minio:
+    container_name: ve-minio
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    labels:
+      com.voiceedge.service: minio
+      com.voiceedge.layer: data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || curl -sf http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- Backend API ----------------------------------------------
+  api:
+    container_name: ve-api
+    build: ./backend
+    labels:
+      com.springpm.service: api
+      com.springpm.layer: backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      KAFKA_BOOTSTRAP: kafka:9092
+      ADMIN_API_KEY: ${ADMIN_API_KEY}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_USER}
+      MINIO_SECRET_KEY: ${MINIO_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      LOGGING_LEVEL_COM_SPRINGPM: ${LOGGING_LEVEL_COM_SPRINGPM:-DEBUG}
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+# --- Volumes ----------------------------------------------
+volumes:
+  postgres_data:
+  minio_data:
