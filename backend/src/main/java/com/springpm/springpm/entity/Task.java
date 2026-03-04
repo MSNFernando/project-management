@@ -73,6 +73,7 @@ public class Task {
     private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<TaskComment> comments = new ArrayList<>();
 }
 

@@ -56,11 +56,14 @@ public class Workspace {
     private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<WorkspaceMember> members = new ArrayList<>();
 
     @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Project> projects = new ArrayList<>();
 
     @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Role> roles = new ArrayList<>();
 }

@@ -40,5 +40,6 @@ public class Role {
         joinColumns = @JoinColumn(name = "role_id"),
         inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
+    @Builder.Default
     private List<Permission> permissions = new ArrayList<>();
 }

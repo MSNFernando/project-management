@@ -77,8 +77,10 @@ public class Project {
     private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Task> tasks = new ArrayList<>();
 
-    @OneToMany(mappedBy = "projectId", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<ProjectMember> members = new ArrayList<>();
 }

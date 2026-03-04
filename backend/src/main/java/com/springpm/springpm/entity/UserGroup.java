@@ -44,6 +44,7 @@ public class UserGroup {
         joinColumns = @JoinColumn(name = "group_id"),
         inverseJoinColumns = @JoinColumn(name = "user_id")
     )
+    @Builder.Default
     private List<User> members = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -52,5 +53,6 @@ public class UserGroup {
         joinColumns = @JoinColumn(name = "group_id"),
         inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
+    @Builder.Default
     private List<Permission> permissions = new ArrayList<>();
 }

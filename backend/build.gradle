@@ -65,9 +65,6 @@ dependencies {
 	// Monitoring
 	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 	
-	// Kafka (for event streaming)
-	implementation 'org.springframework.kafka:spring-kafka'
-	
 	// MinIO (for object storage)
 	implementation 'io.minio:minio:8.5.4'
 	

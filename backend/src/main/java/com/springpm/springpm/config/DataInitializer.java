@@ -103,21 +103,21 @@ public class DataInitializer implements ApplicationRunner {
 
         // Create default roles for workspace
         Role adminRole = Role.builder()
-                .workspaceId(savedWorkspace.getId())
+                .workspace(savedWorkspace)
                 .name("ADMIN")
                 .description("Administrator with full access")
                 .createdAt(LocalDateTime.now())
                 .build();
 
         Role memberRole = Role.builder()
-                .workspaceId(savedWorkspace.getId())
+                .workspace(savedWorkspace)
                 .name("MEMBER")
                 .description("Team member with standard access")
                 .createdAt(LocalDateTime.now())
                 .build();
 
         Role viewerRole = Role.builder()
-                .workspaceId(savedWorkspace.getId())
+                .workspace(savedWorkspace)
                 .name("VIEWER")
                 .description("View-only access")
                 .createdAt(LocalDateTime.now())
