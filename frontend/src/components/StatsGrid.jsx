@@ -1,25 +1,24 @@
 import { FolderOpen, CheckCircle, Users, AlertTriangle } from "lucide-react";
-import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
-export default function StatsGrid() {
+export default function StatsGrid({ stats = null }) {
     const currentWorkspace = useSelector(
         (state) => state?.workspace?.currentWorkspace || null
     );
 
-    const [stats, setStats] = useState({
+    const displayStats = stats || {
         totalProjects: 0,
         activeProjects: 0,
         completedProjects: 0,
         myTasks: 0,
         overdueIssues: 0,
-    });
+    };
 
     const statCards = [
         {
             icon: FolderOpen,
             title: "Total Projects",
-            value: stats.totalProjects,
+            value: displayStats.totalProjects,
             subtitle: `projects in ${currentWorkspace?.name}`,
             bgColor: "bg-blue-500/10",
             textColor: "text-blue-500",
@@ -27,15 +26,15 @@ export default function StatsGrid() {
         {
             icon: CheckCircle,
             title: "Completed Projects",
-            value: stats.completedProjects,
-            subtitle: `of ${stats.totalProjects} total`,
+            value: displayStats.completedProjects,
+            subtitle: `of ${displayStats.totalProjects} total`,
             bgColor: "bg-emerald-500/10",
             textColor: "text-emerald-500",
         },
         {
             icon: Users,
             title: "My Tasks",
-            value: stats.myTasks,
+            value: displayStats.myTasks,
             subtitle: "assigned to me",
             bgColor: "bg-purple-500/10",
             textColor: "text-purple-500",
@@ -43,39 +42,12 @@ export default function StatsGrid() {
         {
             icon: AlertTriangle,
             title: "Overdue",
-            value: stats.overdueIssues,
+            value: displayStats.overdueIssues,
             subtitle: "need attention",
             bgColor: "bg-amber-500/10",
             textColor: "text-amber-500",
         },
     ];
-
-    useEffect(() => {
-        if (currentWorkspace) {
-            setStats({
-                totalProjects: currentWorkspace.projects.length,
-                activeProjects: currentWorkspace.projects.filter(
-                    (p) => p.status !== "CANCELLED" && p.status !== "COMPLETED"
-                ).length,
-                completedProjects: currentWorkspace.projects
-                    .filter((p) => p.status === "COMPLETED")
-                    .reduce((acc, project) => acc + project.tasks.length, 0),
-                myTasks: currentWorkspace.projects.reduce(
-                    (acc, project) =>
-                        acc +
-                        project.tasks.filter(
-                            (t) => t.assignee?.email === currentWorkspace.owner.email
-                        ).length,
-                    0
-                ),
-                overdueIssues: currentWorkspace.projects.reduce(
-                    (acc, project) =>
-                        acc + project.tasks.filter((t) => t.due_date < new Date()).length,
-                    0
-                ),
-            });
-        }
-    }, [currentWorkspace]);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 my-9">

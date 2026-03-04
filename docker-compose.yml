@@ -71,7 +71,7 @@ services:
       retries: 5
 
   kafka-init:
-    container_name: ve-kafka-init
+    #container_name: ve-kafka-init
     image: confluentinc/cp-kafka:7.6.1
     labels:
       com.springpm.service: kafka-init
@@ -95,7 +95,7 @@ services:
 
   # --- Object storage ----------------------------------------------
   minio:
-    container_name: ve-minio
+    #container_name: ve-minio
     image: minio/minio:latest
     command: server /data --console-address ":9001"
     labels:
@@ -117,7 +117,7 @@ services:
 
   # --- Frontend Web App ----------------------------------------------
   web:
-    container_name: ve-web
+    #container_name: ve-web
     build: ./frontend
     labels:
       com.springpm.service: web
@@ -135,7 +135,7 @@ services:
 
   # --- Backend API ----------------------------------------------
   api:
-    container_name: ve-api
+    #container_name: ve-api
     build: ./backend
     labels:
       com.springpm.service: api

@@ -1,7 +1,5 @@
-import { useEffect, useState } from "react";
 import { GitCommit, MessageSquare, Clock, Bug, Zap, Square } from "lucide-react";
 import { format } from "date-fns";
-import { useSelector } from "react-redux";
 
 const typeIcons = {
     BUG: { icon: Bug, color: "text-red-500 dark:text-red-400" },
@@ -17,22 +15,7 @@ const statusColors = {
     DONE: "bg-emerald-200 text-emerald-800 dark:bg-emerald-500 dark:text-emerald-900",
 };
 
-const RecentActivity = () => {
-    const [tasks, setTasks] = useState([]);
-    const { currentWorkspace } = useSelector((state) => state.workspace);
-
-    const getTasksFromCurrentWorkspace = () => {
-
-        if (!currentWorkspace) return;
-
-        const tasks = currentWorkspace.projects.flatMap((project) => project.tasks.map((task) => task));
-        setTasks(tasks);
-    };
-
-    useEffect(() => {
-        getTasksFromCurrentWorkspace();
-    }, [currentWorkspace]);
-
+const RecentActivity = ({ activities = [] }) => {
     return (
         <div className="bg-white dark:bg-zinc-950 dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 rounded-lg transition-all overflow-hidden">
             <div className="border-b border-zinc-200 dark:border-zinc-800 p-4">
@@ -40,7 +23,7 @@ const RecentActivity = () => {
             </div>
 
             <div className="p-0">
-                {tasks.length === 0 ? (
+                {!activities || activities.length === 0 ? (
                     <div className="p-12 text-center">
                         <div className="w-16 h-16 mx-auto mb-4 bg-zinc-200 dark:bg-zinc-800 rounded-full flex items-center justify-center">
                             <Clock className="w-8 h-8 text-zinc-600 dark:text-zinc-500" />
@@ -49,7 +32,7 @@ const RecentActivity = () => {
                     </div>
                 ) : (
                     <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                        {tasks.map((task) => {
+                        {activities.map((task) => {
                             const TypeIcon = typeIcons[task.type]?.icon || Square;
                             const iconColor = typeIcons[task.type]?.color || "text-gray-500 dark:text-gray-400";
 
@@ -65,21 +48,21 @@ const RecentActivity = () => {
                                                     {task.title}
                                                 </h4>
                                                 <span className={`ml-2 px-2 py-1 rounded text-xs ${statusColors[task.status] || "bg-zinc-300 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300"}`}>
-                                                    {task.status.replace("_", " ")}
+                                                    {task.status?.replace("_", " ")}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
-                                                <span className="capitalize">{task.type.toLowerCase()}</span>
+                                                <span className="capitalize">{task.type?.toLowerCase()}</span>
                                                 {task.assignee && (
                                                     <div className="flex items-center gap-1">
                                                         <div className="w-4 h-4 bg-zinc-300 dark:bg-zinc-700 rounded-full flex items-center justify-center text-[10px] text-zinc-800 dark:text-zinc-200">
-                                                            {task.assignee.name[0].toUpperCase()}
+                                                            {task.assignee.fullName?.[0]?.toUpperCase() || '?'}
                                                         </div>
-                                                        {task.assignee.name}
+                                                        {task.assignee.fullName}
                                                     </div>
                                                 )}
                                                 <span>
-                                                    {format(new Date(task.updatedAt), "MMM d, h:mm a")}
+                                                    {task.updatedAt && format(new Date(task.updatedAt), "MMM d, h:mm a")}
                                                 </span>
                                             </div>
                                         </div>

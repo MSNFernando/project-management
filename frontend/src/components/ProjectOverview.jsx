@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Calendar, UsersIcon, FolderOpen } from "lucide-react";
 import { format } from "date-fns";
-import { useSelector } from "react-redux";
 import CreateProjectDialog from "./CreateProjectDialog";
 
-const ProjectOverview = () => {
+const ProjectOverview = ({ projects = [] }) => {
     const statusColors = {
         PLANNING: "bg-zinc-200 text-zinc-800 dark:bg-zinc-600 dark:text-zinc-200",
         ACTIVE: "bg-emerald-200 text-emerald-800 dark:bg-emerald-500 dark:text-emerald-900",
@@ -20,15 +19,9 @@ const ProjectOverview = () => {
         HIGH: "border-green-300 text-green-700 dark:border-green-500 dark:text-green-400",
     };
 
-    const currentWorkspace = useSelector((state) => state?.workspace?.currentWorkspace || null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [projects, setProjects] = useState([]);
 
-    useEffect(() => {
-        setProjects(currentWorkspace?.projects || []);
-    }, [currentWorkspace]);
-
-    return currentWorkspace && (
+    return (
         <div className="bg-white dark:bg-zinc-950 dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 rounded-lg overflow-hidden">
             <div className="border-b border-zinc-200 dark:border-zinc-800 p-4 flex items-center justify-between">
                 <h2 className="text-md text-zinc-800 dark:text-zinc-300">Project Overview</h2>
@@ -38,7 +31,7 @@ const ProjectOverview = () => {
             </div>
 
             <div className="p-0">
-                {projects.length === 0 ? (
+                {!projects || projects.length === 0 ? (
                     <div className="p-12 text-center">
                         <div className="w-16 h-16 mx-auto mb-4 bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-500 rounded-full flex items-center justify-center">
                             <FolderOpen size={32} />
@@ -72,7 +65,7 @@ const ProjectOverview = () => {
 
                                 <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-500 mb-3">
                                     <div className="flex items-center gap-4">
-                                        {project.members?.length > 0 && (
+                                        {project.members && project.members.length > 0 && (
                                             <div className="flex items-center gap-1">
                                                 <UsersIcon className="w-3 h-3" />
                                                 {project.members.length} members
