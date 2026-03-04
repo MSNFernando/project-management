@@ -102,6 +102,7 @@ CREATE TABLE workspace_members (
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     role_id UUID NOT NULL REFERENCES roles(id) ON DELETE RESTRICT,
+    role VARCHAR(50) NOT NULL,
     message TEXT,
     is_active BOOLEAN DEFAULT true,
     joined_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -174,8 +175,8 @@ CREATE TABLE projects (
     priority VARCHAR(50) NOT NULL DEFAULT 'MEDIUM', -- LOW, MEDIUM, HIGH
     progress INTEGER DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
     team_lead_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    start_date DATE,
-    end_date DATE,
+    start_date TIMESTAMP WITH TIME ZONE,--DATE
+    end_date TIMESTAMP WITH TIME ZONE,--DATE
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -216,7 +217,7 @@ CREATE TABLE tasks (
     type VARCHAR(50) NOT NULL DEFAULT 'TASK', -- BUG, FEATURE, TASK, IMPROVEMENT, OTHER
     priority VARCHAR(50) NOT NULL DEFAULT 'MEDIUM', -- LOW, MEDIUM, HIGH
     assignee_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    due_date DATE,
+    due_date TIMESTAMP WITH TIME ZONE,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -261,7 +262,7 @@ CREATE TABLE audit_logs (
     old_values JSONB,
     new_values JSONB,
     details TEXT,
-    ip_address INET,
+    ip_address VARCHAR(255),
     user_agent TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
