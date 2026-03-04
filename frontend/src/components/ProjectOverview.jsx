@@ -2,9 +2,12 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Calendar, UsersIcon, FolderOpen } from "lucide-react";
 import { format } from "date-fns";
+import { useSelector } from "react-redux";
 import CreateProjectDialog from "./CreateProjectDialog";
 
 const ProjectOverview = ({ projects = [] }) => {
+    const { currentWorkspace } = useSelector((state) => state.workspace);
+    
     const statusColors = {
         PLANNING: "bg-zinc-200 text-zinc-800 dark:bg-zinc-600 dark:text-zinc-200",
         ACTIVE: "bg-emerald-200 text-emerald-800 dark:bg-emerald-500 dark:text-emerald-900",
@@ -45,7 +48,11 @@ const ProjectOverview = ({ projects = [] }) => {
                 ) : (
                     <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
                         {projects.slice(0, 5).map((project) => (
-                            <Link key={project.id} to={`/projectsDetail?id=${project.id}&tab=tasks`} className="block p-6 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
+                            <Link 
+                                key={project.id} 
+                                to={`/projectsDetail?id=${project.id}&workspaceId=${currentWorkspace?.id}&tab=tasks`} 
+                                className="block p-6 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors"
+                            >
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex-1">
                                         <h3 className="font-semibold text-zinc-800 dark:text-zinc-300 mb-1">
