@@ -1,22 +1,43 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Plus, Search, FolderOpen } from "lucide-react";
+import { toast } from "react-hot-toast";
 import ProjectCard from "../components/ProjectCard";
 import CreateProjectDialog from "../components/CreateProjectDialog";
+import projectService from "../services/projectService";
 
 export default function Projects() {
     
-    const projects = useSelector(
-        (state) => state?.workspace?.currentWorkspace?.projects || []
-    );
-
+    const { currentWorkspace } = useSelector((state) => state.workspace);
+    
+    const [projects, setProjects] = useState([]);
     const [filteredProjects, setFilteredProjects] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [filters, setFilters] = useState({
         status: "ALL",
         priority: "ALL",
     });
+
+    useEffect(() => {
+        if (!currentWorkspace?.id) return;
+
+        const fetchProjects = async () => {
+            try {
+                setLoading(true);
+                const data = await projectService.getProjects(currentWorkspace.id);
+                setProjects(data);
+            } catch (error) {
+                console.error('Failed to fetch projects:', error);
+                toast.error(error.response?.data?.message || 'Failed to load projects');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProjects();
+    }, [currentWorkspace?.id]);
 
     const filterProjects = () => {
         let filtered = projects;
@@ -46,15 +67,33 @@ export default function Projects() {
         filterProjects();
     }, [projects, searchTerm, filters]);
 
+    if (loading) {
+        return (
+            <div className="max-w-6xl mx-auto flex items-center justify-center py-20">
+                <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                    <p className="mt-4 text-gray-600 dark:text-gray-400">Loading projects...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6 max-w-6xl mx-auto">
             {/* Header */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                 <div>
-                    <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white mb-1"> Projects </h1>
-                    <p className="text-gray-500 dark:text-zinc-400 text-sm"> Manage and track your projects </p>
+                    <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white mb-1">
+                        Projects
+                    </h1>
+                    <p className="text-gray-500 dark:text-zinc-400 text-sm">
+                        Manage and track your projects
+                    </p>
                 </div>
-                <button onClick={() => setIsDialogOpen(true)} className="flex items-center px-5 py-2 text-sm rounded bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:opacity-90 transition" >
+                <button 
+                    onClick={() => setIsDialogOpen(true)} 
+                    className="flex items-center px-5 py-2 text-sm rounded bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:opacity-90 transition"
+                >
                     <Plus className="size-4 mr-2" /> New Project
                 </button>
                 <CreateProjectDialog isDialogOpen={isDialogOpen} setIsDialogOpen={setIsDialogOpen} />
@@ -64,9 +103,18 @@ export default function Projects() {
             <div className="flex flex-col md:flex-row gap-4">
                 <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-zinc-400 w-4 h-4" />
-                    <input onChange={(e) => setSearchTerm(e.target.value)} value={searchTerm} className="w-full pl-10 text-sm pr-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-400 focus:border-blue-500 outline-none" placeholder="Search projects..." />
+                    <input 
+                        onChange={(e) => setSearchTerm(e.target.value)} 
+                        value={searchTerm} 
+                        className="w-full pl-10 text-sm pr-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-400 focus:border-blue-500 outline-none" 
+                        placeholder="Search projects..." 
+                    />
                 </div>
-                <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-white text-sm" >
+                <select 
+                    value={filters.status} 
+                    onChange={(e) => setFilters({ ...filters, status: e.target.value })} 
+                    className="px-3 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-white text-sm"
+                >
                     <option value="ALL">All Status</option>
                     <option value="ACTIVE">Active</option>
                     <option value="PLANNING">Planning</option>
@@ -74,7 +122,11 @@ export default function Projects() {
                     <option value="ON_HOLD">On Hold</option>
                     <option value="CANCELLED">Cancelled</option>
                 </select>
-                <select value={filters.priority} onChange={(e) => setFilters({ ...filters, priority: e.target.value })} className="px-3 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-white text-sm" >
+                <select 
+                    value={filters.priority} 
+                    onChange={(e) => setFilters({ ...filters, priority: e.target.value })} 
+                    className="px-3 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 text-gray-900 dark:text-white text-sm"
+                >
                     <option value="ALL">All Priority</option>
                     <option value="HIGH">High</option>
                     <option value="MEDIUM">Medium</option>
@@ -95,7 +147,10 @@ export default function Projects() {
                         <p className="text-gray-500 dark:text-zinc-400 mb-6 text-sm">
                             Create your first project to get started
                         </p>
-                        <button onClick={() => setIsDialogOpen(true)} className="flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mx-auto text-sm" >
+                        <button 
+                            onClick={() => setIsDialogOpen(true)} 
+                            className="flex items-center gap-1.5 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mx-auto text-sm"
+                        >
                             <Plus className="size-4" />
                             Create Project
                         </button>

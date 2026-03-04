@@ -1,27 +1,53 @@
 import { useEffect, useState } from "react";
 import { UsersIcon, Search, UserPlus, Shield, Activity } from "lucide-react";
+import { toast } from "react-hot-toast";
 import InviteMemberDialog from "../components/InviteMemberDialog";
 import { useSelector } from "react-redux";
+import workspaceService from "../services/workspaceService";
 
 const Team = () => {
-
-    const [tasks, setTasks] = useState([]);
+    const { currentWorkspace } = useSelector((state) => state.workspace);
+    
+    const [users, setUsers] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [users, setUsers] = useState([]);
-    const currentWorkspace = useSelector((state) => state?.workspace?.currentWorkspace || null);
-    const projects = currentWorkspace?.projects || [];
+    const [loading, setLoading] = useState(true);
 
     const filteredUsers = users.filter(
         (user) =>
-            user?.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user?.user?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             user?.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     useEffect(() => {
-        setUsers(currentWorkspace?.members || []);
-        setTasks(currentWorkspace?.projects?.reduce((acc, project) => [...acc, ...project.tasks], []) || []);
-    }, [currentWorkspace]);
+        if (!currentWorkspace?.id) return;
+
+        const fetchMembers = async () => {
+            try {
+                setLoading(true);
+                const data = await workspaceService.getMembers(currentWorkspace.id);
+                setUsers(data);
+            } catch (error) {
+                console.error('Failed to fetch team members:', error);
+                toast.error(error.response?.data?.message || 'Failed to load team members');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchMembers();
+    }, [currentWorkspace?.id]);
+
+    if (loading) {
+        return (
+            <div className="max-w-6xl mx-auto flex items-center justify-center py-20">
+                <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                    <p className="mt-4 text-gray-600 dark:text-gray-400">Loading team members...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 max-w-6xl mx-auto">
@@ -33,7 +59,10 @@ const Team = () => {
                         Manage team members and their contributions
                     </p>
                 </div>
-                <button onClick={() => setIsDialogOpen(true)} className="flex items-center px-5 py-2 rounded text-sm bg-gradient-to-br from-blue-500 to-blue-600 hover:opacity-90 text-white transition" >
+                <button 
+                    onClick={() => setIsDialogOpen(true)} 
+                    className="flex items-center px-5 py-2 rounded text-sm bg-gradient-to-br from-blue-500 to-blue-600 hover:opacity-90 text-white transition"
+                >
                     <UserPlus className="w-4 h-4 mr-2" /> Invite Member
                 </button>
                 <InviteMemberDialog isDialogOpen={isDialogOpen} setIsDialogOpen={setIsDialogOpen} />
@@ -54,13 +83,13 @@ const Team = () => {
                     </div>
                 </div>
 
-                {/* Active Projects */}
+                {/* Admin Count */}
                 <div className="max-sm:w-full dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-gray-300 dark:border-zinc-800 rounded-lg p-6">
                     <div className="flex items-center justify-between gap-8 md:gap-22">
                         <div>
-                            <p className="text-sm text-gray-500 dark:text-zinc-400">Active Projects</p>
+                            <p className="text-sm text-gray-500 dark:text-zinc-400">Admins</p>
                             <p className="text-xl font-bold text-gray-900 dark:text-white">
-                                {projects.filter((p) => p.status !== "CANCELLED" && p.status !== "COMPLETED").length}
+                                {users.filter((u) => u.role === "ADMIN").length}
                             </p>
                         </div>
                         <div className="p-3 rounded-xl bg-emerald-100 dark:bg-emerald-500/10">
@@ -69,12 +98,14 @@ const Team = () => {
                     </div>
                 </div>
 
-                {/* Total Tasks */}
+                {/* Contributors */}
                 <div className="max-sm:w-full dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-gray-300 dark:border-zinc-800 rounded-lg p-6">
                     <div className="flex items-center justify-between gap-8 md:gap-22">
                         <div>
-                            <p className="text-sm text-gray-500 dark:text-zinc-400">Total Tasks</p>
-                            <p className="text-xl font-bold text-gray-900 dark:text-white">{tasks.length}</p>
+                            <p className="text-sm text-gray-500 dark:text-zinc-400">Contributors</p>
+                            <p className="text-xl font-bold text-gray-900 dark:text-white">
+                                {users.filter((u) => u.role !== "ADMIN").length}
+                            </p>
                         </div>
                         <div className="p-3 rounded-xl bg-purple-100 dark:bg-purple-500/10">
                             <Shield className="size-4 text-purple-500 dark:text-purple-200" />
@@ -86,7 +117,12 @@ const Team = () => {
             {/* Search */}
             <div className="relative max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-zinc-400 size-3" />
-                <input placeholder="Search team members..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8 w-full text-sm rounded-md border border-gray-300 dark:border-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-400 py-2 focus:outline-none focus:border-blue-500" />
+                <input 
+                    placeholder="Search team members..." 
+                    value={searchTerm} 
+                    onChange={(e) => setSearchTerm(e.target.value)} 
+                    className="pl-8 w-full text-sm rounded-md border border-gray-300 dark:border-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-400 py-2 focus:outline-none focus:border-blue-500"
+                />
             </div>
 
             {/* Team Members */}
@@ -132,17 +168,15 @@ const Team = () => {
                                             className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
                                         >
                                             <td className="px-6 py-2.5 whitespace-nowrap flex items-center gap-3">
-                                                <img
-                                                    src={user.user.image}
-                                                    alt={user.user.name}
-                                                    className="size-7 rounded-full bg-gray-200 dark:bg-zinc-800"
-                                                />
+                                                <div className="size-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs">
+                                                    {user.user?.fullName?.[0]?.toUpperCase() || '?'}
+                                                </div>
                                                 <span className="text-sm text-zinc-800 dark:text-white truncate">
-                                                    {user.user?.name || "Unknown User"}
+                                                    {user.user?.fullName || "Unknown User"}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-2.5 whitespace-nowrap text-sm text-gray-500 dark:text-zinc-400">
-                                                {user.user.email}
+                                                {user.user?.email}
                                             </td>
                                             <td className="px-6 py-2.5 whitespace-nowrap">
                                                 <span
@@ -168,17 +202,15 @@ const Team = () => {
                                     className="p-4 border border-gray-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-900"
                                 >
                                     <div className="flex items-center gap-3 mb-2">
-                                        <img
-                                            src={user.user.image}
-                                            alt={user.user.name}
-                                            className="size-9 rounded-full bg-gray-200 dark:bg-zinc-800"
-                                        />
+                                        <div className="size-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                                            {user.user?.fullName?.[0]?.toUpperCase() || '?'}
+                                        </div>
                                         <div>
                                             <p className="font-medium text-gray-900 dark:text-white">
-                                                {user.user?.name || "Unknown User"}
+                                                {user.user?.fullName || "Unknown User"}
                                             </p>
                                             <p className="text-sm text-gray-500 dark:text-zinc-400">
-                                                {user.user.email}
+                                                {user.user?.email}
                                             </p>
                                         </div>
                                     </div>
