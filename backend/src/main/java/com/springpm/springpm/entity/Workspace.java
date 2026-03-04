@@ -2,6 +2,8 @@ package com.springpm.springpm.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -37,6 +39,7 @@ public class Workspace {
     private User owner;
 
     @Column(columnDefinition = "JSONB")
+    @JdbcTypeCode(SqlTypes.JSON)
     @Builder.Default
     private String settings = "{}";
 
