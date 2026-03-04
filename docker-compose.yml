@@ -153,6 +153,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       LOGGING_LEVEL_COM_SPRINGPM: ${LOGGING_LEVEL_COM_SPRINGPM:-DEBUG}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     volumes:
       - uploads_data:/app/uploads
     ports:
