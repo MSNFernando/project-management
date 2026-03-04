@@ -132,6 +132,7 @@ public class DataInitializer implements ApplicationRunner {
         WorkspaceMember workspaceMember = WorkspaceMember.builder()
                 .workspaceId(savedWorkspace.getId())
                 .userId(savedUser.getId())
+                .roleId(savedAdminRole.getId())
                 .role("ADMIN")
                 .isActive(true)
                 .joinedAt(LocalDateTime.now())
