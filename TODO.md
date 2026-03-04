@@ -48,7 +48,7 @@
 - [ ] Invoice management
 - [ ] Payment history
 
-## Phase 5: Advanced Features (🎯 PLANNED)
+## Phase 5: Advanced Features & AI (🎯 PLANNED)
 ### AI Integration
 - [ ] Claude API integration for project management assistance
 - [ ] AI change request generator
@@ -61,10 +61,18 @@
 - [ ] File upload to MinIO
 - [ ] Audit logging
 - [ ] Activity timeline
-- [ ] Real-time updates via Kafka events
 - [ ] Advanced analytics and reporting
 
-## Phase 6: Testing & Quality (🎯 PLANNED)
+## Phase 6: Event Streaming & Real-time Features (🎯 PLANNED)
+- [ ] Kafka and Zookeeper setup (currently disabled, to be enabled when scaling)
+- [ ] Event-driven architecture implementation
+- [ ] Real-time notifications (WebSocket/SSE)
+- [ ] Audit trail event logging
+- [ ] User activity tracking
+- [ ] Task update real-time sync
+- [ ] Workspace activity feed
+
+## Phase 7: Testing & Quality (🎯 PLANNED)
 - [ ] Unit tests for services
 - [ ] Integration tests for controllers
 - [ ] Frontend component tests
@@ -72,7 +80,7 @@
 - [ ] Performance testing
 - [ ] Security audit
 
-## Phase 7: Monitoring & Operations (🎯 PLANNED)
+## Phase 8: Monitoring & Operations (🎯 PLANNED)
 - [ ] Prometheus metrics
 - [ ] Logging setup
 - [ ] Health monitoring dashboard
@@ -83,7 +91,9 @@
 - Working on Login/Signup components and API service layer
 
 ## Notes
-- All 7 Docker services are running and healthy (as of March 4, 2026)
+- 5 Docker services running (Postgres, Redis, MinIO, Frontend, Backend)
+- Kafka and Zookeeper disabled for now (planned for Phase 6 when scaling)
 - Backend Gradle build successful with Java 17
 - Frontend containerized with Nginx SPA routing
 - Multi-tenancy implemented with workspace isolation
+- Default admin user auto-created on startup (admin@springpm.com / Admin1234!)
