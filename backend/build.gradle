@@ -59,9 +59,6 @@ dependencies {
 	implementation 'org.springframework.ai:spring-ai-pdf-document-reader'
 	implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
 	
-	// Cloud & Gateway
-	implementation 'org.springframework.cloud:spring-cloud-starter-zookeeper-config'
-	
 	// Thymeleaf Security
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 	
