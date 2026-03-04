@@ -30,7 +30,7 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     
     Optional<Project> findByIdAndWorkspaceId(UUID projectId, UUID workspaceId);
     
-    Optional<Project> findByIdAndOwnerId(UUID projectId, UUID ownerId);
+    Optional<Project> findByIdAndTeamLeadId(UUID projectId, UUID teamLeadId);
     
     @Query("SELECT p FROM Project p WHERE p.workspaceId = :workspaceId")
     List<Project> findByWorkspaceIdForMember(@Param("workspaceId") UUID workspaceId);
