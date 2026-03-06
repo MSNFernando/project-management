@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import api from '../services/api';
 import { setAuth } from '../features/authSlice';
+import { fetchWorkspaces } from '../features/workspaceSlice';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -45,6 +46,7 @@ const Login = () => {
           token: accessToken,
         }));
         
+        dispatch(fetchWorkspaces());
         toast.success('Login successful!');
         navigate('/');
       }

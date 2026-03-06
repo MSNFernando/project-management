@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { ChevronRightIcon, SettingsIcon, KanbanIcon, ChartColumnIcon, CalendarIcon, ArrowRightIcon } from 'lucide-react';
 import { useSelector } from 'react-redux';
+import projectService from '../services/projectService';
 
 const ProjectSidebar = () => {
 
@@ -9,16 +10,29 @@ const ProjectSidebar = () => {
 
     const [expandedProjects, setExpandedProjects] = useState(new Set());
     const [searchParams] = useSearchParams();
+    const [projects, setProjects] = useState([]);
 
-    const projects = useSelector(
-        (state) => state?.workspace?.currentWorkspace?.projects || []
-    );
+    const currentWorkspace = useSelector((state) => state.workspace?.currentWorkspace);
+
+    useEffect(() => {
+        const fetchProjects = async () => {
+            if (!currentWorkspace?.id) return;
+            try {
+                const data = await projectService.getProjects(currentWorkspace.id);
+                setProjects(data || []);
+            } catch (error) {
+                console.error('Failed to fetch projects:', error);
+                setProjects([]);
+            }
+        };
+        fetchProjects();
+    }, [currentWorkspace?.id]);
 
     const getProjectSubItems = (projectId) => [
-        { title: 'Tasks', icon: KanbanIcon, url: `/projectsDetail?id=${projectId}&tab=tasks` },
-        { title: 'Analytics', icon: ChartColumnIcon, url: `/projectsDetail?id=${projectId}&tab=analytics` },
-        { title: 'Calendar', icon: CalendarIcon, url: `/projectsDetail?id=${projectId}&tab=calendar` },
-        { title: 'Settings', icon: SettingsIcon, url: `/projectsDetail?id=${projectId}&tab=settings` }
+        { title: 'Tasks', icon: KanbanIcon, url: `/projectsDetail?id=${projectId}&workspaceId=${currentWorkspace?.id}&tab=tasks` },
+        { title: 'Analytics', icon: ChartColumnIcon, url: `/projectsDetail?id=${projectId}&workspaceId=${currentWorkspace?.id}&tab=analytics` },
+        { title: 'Calendar', icon: CalendarIcon, url: `/projectsDetail?id=${projectId}&workspaceId=${currentWorkspace?.id}&tab=calendar` },
+        { title: 'Settings', icon: SettingsIcon, url: `/projectsDetail?id=${projectId}&workspaceId=${currentWorkspace?.id}&tab=settings` }
     ];
 
     const toggleProject = (id) => {

@@ -4,55 +4,61 @@ import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CalendarIcon, MessageCircle, PenIcon } from "lucide-react";
-import { assets } from "../assets/assets";
+import taskService from "../services/taskService";
+import projectService from "../services/projectService";
 
 const TaskDetails = () => {
 
     const [searchParams] = useSearchParams();
+    const workspaceId = searchParams.get("workspaceId");
     const projectId = searchParams.get("projectId");
     const taskId = searchParams.get("taskId");
 
-    const user = { id : 'user_1'}
+    const { user } = useSelector((state) => state.auth);
+    const { currentWorkspace } = useSelector((state) => state.workspace);
+    const wsId = workspaceId || currentWorkspace?.id;
+
     const [task, setTask] = useState(null);
     const [project, setProject] = useState(null);
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
     const [loading, setLoading] = useState(true);
 
-    const { currentWorkspace } = useSelector((state) => state.workspace);
-
     const fetchComments = async () => {
-
+        if (!wsId || !projectId || !taskId) return;
+        try {
+            const data = await taskService.getComments(wsId, projectId, taskId);
+            setComments(data || []);
+        } catch (error) {
+            console.error('Failed to fetch comments:', error);
+        }
     };
 
     const fetchTaskDetails = async () => {
         setLoading(true);
-        if (!projectId || !taskId) return;
+        if (!wsId || !projectId || !taskId) return;
 
-        const proj = currentWorkspace.projects.find((p) => p.id === projectId);
-        if (!proj) return;
-
-        const tsk = proj.tasks.find((t) => t.id === taskId);
-        if (!tsk) return;
-
-        setTask(tsk);
-        setProject(proj);
-        setLoading(false);
+        try {
+            const [tsk, proj] = await Promise.all([
+                taskService.getTask(wsId, projectId, taskId),
+                projectService.getProject(wsId, projectId),
+            ]);
+            setTask(tsk);
+            setProject(proj);
+        } catch (error) {
+            console.error('Failed to fetch task details:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleAddComment = async () => {
-        if (!newComment.trim()) return;
+        if (!newComment.trim() || !wsId) return;
 
         try {
-
             toast.loading("Adding comment...");
-
-            //  Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-
-            const dummyComment = { id: Date.now(), user: { id: 1, name: "User", image: assets.profile_img_a }, content: newComment, createdAt: new Date() };
-            
-            setComments((prev) => [...prev, dummyComment]);
+            const comment = await taskService.addComment(wsId, projectId, taskId, newComment);
+            setComments((prev) => [...prev, comment]);
             setNewComment("");
             toast.dismissAll();
             toast.success("Comment added.");
@@ -63,7 +69,7 @@ const TaskDetails = () => {
         }
     };
 
-    useEffect(() => { fetchTaskDetails(); }, [taskId]);
+    useEffect(() => { fetchTaskDetails(); }, [wsId, projectId, taskId]);
 
     useEffect(() => {
         if (taskId && task) {
@@ -149,13 +155,17 @@ const TaskDetails = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-700 dark:text-zinc-300">
                         <div className="flex items-center gap-2">
-                            <img src={task.assignee?.image} className="size-5 rounded-full" alt="avatar" />
-                            {task.assignee?.name || "Unassigned"}
+                            <div className="size-5 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                                {(task.assigneeName || "?").charAt(0).toUpperCase()}
+                            </div>
+                            {task.assigneeName || "Unassigned"}
                         </div>
-                        <div className="flex items-center gap-2">
-                            <CalendarIcon className="size-4 text-gray-500 dark:text-zinc-500" />
-                            Due : {format(new Date(task.due_date), "dd MMM yyyy")}
-                        </div>
+                        {task.dueDate && (
+                            <div className="flex items-center gap-2">
+                                <CalendarIcon className="size-4 text-gray-500 dark:text-zinc-500" />
+                                Due : {format(new Date(task.dueDate), "dd MMM yyyy")}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -164,11 +174,12 @@ const TaskDetails = () => {
                     <div className="p-4 rounded-md bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border border-gray-300 dark:border-zinc-800 ">
                         <p className="text-xl font-medium mb-4">Project Details</p>
                         <h2 className="text-gray-900 dark:text-zinc-100 flex items-center gap-2"> <PenIcon className="size-4" /> {project.name}</h2>
-                        <p className="text-xs mt-3">Project Start Date: {format(new Date(project.start_date), "dd MMM yyyy")}</p>
+                        {project.startDate && (
+                            <p className="text-xs mt-3">Project Start Date: {format(new Date(project.startDate), "dd MMM yyyy")}</p>
+                        )}
                         <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-zinc-400 mt-3">
                             <span>Status: {project.status}</span>
-                            <span>Priority: {project.priority}</span>
-                            <span>Progress: {project.progress}%</span>
+                            {project.priority && <span>Priority: {project.priority}</span>}
                         </div>
                     </div>
                 )}
