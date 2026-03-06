@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/workspaces")
+@RequestMapping("/workspaces")
 @CrossOrigin(origins = "*")
 public class WorkspaceController {
 

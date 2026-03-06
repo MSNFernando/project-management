@@ -6,7 +6,7 @@ RUN gradle bootJar --no-daemon -x test
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app
-RUN apt-get update && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y tzdata && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Duser.timezone=UTC", "-jar", "app.jar"]
