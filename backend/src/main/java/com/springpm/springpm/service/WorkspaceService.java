@@ -282,6 +282,7 @@ public class WorkspaceService {
         public String email;
         public String role;
         public LocalDateTime joinedAt;
+        public UserInfo user;
 
         public WorkspaceMemberDTO(UUID id, UUID workspaceId, UUID userId, String userName, String email, String role, LocalDateTime joinedAt) {
             this.id = id;
@@ -291,6 +292,7 @@ public class WorkspaceService {
             this.email = email;
             this.role = role;
             this.joinedAt = joinedAt;
+            this.user = new UserInfo(userName, email);
         }
 
         // Getters
@@ -301,5 +303,17 @@ public class WorkspaceService {
         public String getEmail() { return email; }
         public String getRole() { return role; }
         public LocalDateTime getJoinedAt() { return joinedAt; }
+        public UserInfo getUser() { return user; }
+
+        public static class UserInfo {
+            public String fullName;
+            public String email;
+            public UserInfo(String fullName, String email) {
+                this.fullName = fullName;
+                this.email = email;
+            }
+            public String getFullName() { return fullName; }
+            public String getEmail() { return email; }
+        }
     }
 }

@@ -12,6 +12,7 @@ import ProjectDetails from "./pages/ProjectDetails";
 import TaskDetails from "./pages/TaskDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { setAuth } from "./features/authSlice";
+import { fetchWorkspaces } from "./features/workspaceSlice";
 
 const App = () => {
     const dispatch = useDispatch();
@@ -29,6 +30,7 @@ const App = () => {
                     isAuthenticated: true,
                     token,
                 }));
+                dispatch(fetchWorkspaces());
             } catch (error) {
                 console.error('Failed to restore auth state:', error);
                 localStorage.clear();

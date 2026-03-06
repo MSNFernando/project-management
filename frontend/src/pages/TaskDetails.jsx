@@ -29,7 +29,7 @@ const TaskDetails = () => {
         setLoading(true);
         if (!projectId || !taskId) return;
 
-        const proj = currentWorkspace.projects.find((p) => p.id === projectId);
+        const proj = currentWorkspace?.projects?.find((p) => p.id === projectId);
         if (!proj) return;
 
         const tsk = proj.tasks.find((t) => t.id === taskId);

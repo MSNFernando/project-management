@@ -15,6 +15,7 @@ public class UserDTO {
     private UUID id;
     private String email;
     private String name;
+    private String fullName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

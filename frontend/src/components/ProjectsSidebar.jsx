@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { ChevronRightIcon, SettingsIcon, KanbanIcon, ChartColumnIcon, CalendarIcon, ArrowRightIcon } from 'lucide-react';
 import { useSelector } from 'react-redux';
+import projectService from '../services/projectService';
 
 const ProjectSidebar = () => {
 
@@ -9,10 +10,16 @@ const ProjectSidebar = () => {
 
     const [expandedProjects, setExpandedProjects] = useState(new Set());
     const [searchParams] = useSearchParams();
+    const [projects, setProjects] = useState([]);
 
-    const projects = useSelector(
-        (state) => state?.workspace?.currentWorkspace?.projects || []
-    );
+    const { currentWorkspace } = useSelector((state) => state.workspace);
+
+    useEffect(() => {
+        if (!currentWorkspace?.id) return;
+        projectService.getProjects(currentWorkspace.id)
+            .then((data) => setProjects(data || []))
+            .catch(() => setProjects([]));
+    }, [currentWorkspace?.id]);
 
     const getProjectSubItems = (projectId) => [
         { title: 'Tasks', icon: KanbanIcon, url: `/projectsDetail?id=${projectId}&tab=tasks` },
@@ -52,7 +59,6 @@ const ProjectSidebar = () => {
                         {expandedProjects.has(project.id) && (
                             <div className="ml-5 mt-1 space-y-1">
                                 {getProjectSubItems(project.id).map((subItem) => {
-                                    // checking if the current path matches the sub-item's URL
                                     const isActive =
                                         location.pathname === `/projectsDetail` &&
                                         searchParams.get('id') === project.id &&

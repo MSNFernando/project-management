@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/workspaces/{workspaceId}/dashboard")
+@RequestMapping("/workspaces/{workspaceId}/dashboard")
 @CrossOrigin(origins = "*")
 public class DashboardController {
 
@@ -56,10 +56,10 @@ public class DashboardController {
      * GET /api/workspaces/{workspaceId}/dashboard/tasks-summary
      */
     @GetMapping("/tasks-summary")
-    public ResponseEntity<ApiResponse<List<DashboardService.UserTaskSummaryDTO>>> getUserTaskSummary(
+    public ResponseEntity<ApiResponse<DashboardService.TasksSummaryResponseDTO>> getUserTaskSummary(
             @PathVariable UUID workspaceId) {
         try {
-            List<DashboardService.UserTaskSummaryDTO> summary = dashboardService.getUserTaskSummary(workspaceId);
+            DashboardService.TasksSummaryResponseDTO summary = dashboardService.getUserTaskSummary(workspaceId);
             return ResponseEntity.ok(ApiResponse.success(summary));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)

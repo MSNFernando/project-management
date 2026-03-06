@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import projectService from "../services/projectService";
+import workspaceService from "../services/workspaceService";
+import toast from "react-hot-toast";
 import { XIcon } from "lucide-react";
 import { useSelector } from "react-redux";
 
 const CreateProjectDialog = ({ isDialogOpen, setIsDialogOpen }) => {
 
     const { currentWorkspace } = useSelector((state) => state.workspace);
+    const [members, setMembers] = useState([]);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -20,9 +25,34 @@ const CreateProjectDialog = ({ isDialogOpen, setIsDialogOpen }) => {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    useEffect(() => {
+        if (!currentWorkspace?.id) return;
+        workspaceService.getMembers(currentWorkspace.id)
+            .then((data) => setMembers(data || []))
+            .catch(() => setMembers([]));
+    }, [currentWorkspace?.id]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+        if (!currentWorkspace?.id) return;
+        setIsSubmitting(true);
+        try {
+            await projectService.createProject(currentWorkspace.id, {
+                name: formData.name,
+                description: formData.description,
+                status: formData.status,
+                priority: formData.priority,
+                startDate: formData.start_date ? `${formData.start_date}T00:00:00` : null,
+                endDate: formData.end_date ? `${formData.end_date}T00:00:00` : null,
+            });
+            toast.success("Project created!");
+            setIsDialogOpen(false);
+            setFormData({ name: "", description: "", status: "PLANNING", priority: "MEDIUM", start_date: "", end_date: "", team_members: [], team_lead: "", progress: 0 });
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to create project");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const removeTeamMember = (email) => {
@@ -98,7 +128,7 @@ const CreateProjectDialog = ({ isDialogOpen, setIsDialogOpen }) => {
                         <label className="block text-sm mb-1">Project Lead</label>
                         <select value={formData.team_lead} onChange={(e) => setFormData({ ...formData, team_lead: e.target.value, team_members: e.target.value ? [...new Set([...formData.team_members, e.target.value])] : formData.team_members, })} className="w-full px-3 py-2 rounded dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 mt-1 text-zinc-900 dark:text-zinc-200 text-sm" >
                             <option value="">No lead</option>
-                            {currentWorkspace?.members?.map((member) => (
+                            {members.map((member) => (
                                 <option key={member.user.email} value={member.user.email}>
                                     {member.user.email}
                                 </option>
@@ -117,7 +147,7 @@ const CreateProjectDialog = ({ isDialogOpen, setIsDialogOpen }) => {
                             }}
                         >
                             <option value="">Add team members</option>
-                            {currentWorkspace?.members
+                            {members
                                 ?.filter((email) => !formData.team_members.includes(email))
                                 .map((member) => (
                                     <option key={member.user.email} value={member.email}>

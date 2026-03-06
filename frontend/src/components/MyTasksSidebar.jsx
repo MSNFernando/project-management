@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 import { CheckSquareIcon, ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import dashboardService from '../services/dashboardService';
 
 function MyTasksSidebar() {
-
-    const user = { id: 'user_1' }
 
     const { currentWorkspace } = useSelector((state) => state.workspace);
     const [showMyTasks, setShowMyTasks] = useState(false);
@@ -26,19 +25,12 @@ function MyTasksSidebar() {
         }
     };
 
-    const fetchUserTasks = () => {
-        const userId = user?.id || '';
-        if (!userId || !currentWorkspace) return;
-        const currentWorkspaceTasks = currentWorkspace.projects.flatMap((project) => {
-            return project.tasks.filter((task) => task?.assignee?.id === userId);
-        });
-
-        setMyTasks(currentWorkspaceTasks);
-    }
-
     useEffect(() => {
-        fetchUserTasks()
-    }, [currentWorkspace])
+        if (!currentWorkspace?.id) return;
+        dashboardService.getTasksSummary(currentWorkspace.id)
+            .then((summary) => setMyTasks(summary?.myTasks || []))
+            .catch(() => setMyTasks([]));
+    }, [currentWorkspace?.id])
 
     return (
         <div className="mt-6 px-3">

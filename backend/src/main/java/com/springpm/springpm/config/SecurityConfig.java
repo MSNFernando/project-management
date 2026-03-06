@@ -105,9 +105,9 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
-                .requestMatchers("/api/docs/**").permitAll()
+                .requestMatchers("/docs/**").permitAll()
                 // All other requests require authentication
                 .anyRequest().authenticated()
             )
