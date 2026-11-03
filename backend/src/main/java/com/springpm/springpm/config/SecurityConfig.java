@@ -106,6 +106,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/error").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/docs/**").permitAll()
                 // All other requests require authentication

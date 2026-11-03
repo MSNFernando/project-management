@@ -64,7 +64,6 @@ public class WorkspaceService {
         UUID userId = TenantContext.getCurrentUserIdRequired();
 
         Workspace workspace = new Workspace();
-        workspace.setId(UUID.randomUUID());
         workspace.setName(name);
         workspace.setSlug(generateSlug(name));
         workspace.setDescription(description);
@@ -75,7 +74,6 @@ public class WorkspaceService {
 
         // Add owner as ADMIN
         WorkspaceMember member = new WorkspaceMember();
-        member.setId(UUID.randomUUID());
         member.setWorkspaceId(workspace.getId());
         member.setUserId(userId);
         member.setRole("ADMIN");
@@ -152,7 +150,6 @@ public class WorkspaceService {
         }
 
         WorkspaceMember member = new WorkspaceMember();
-        member.setId(UUID.randomUUID());
         member.setWorkspaceId(workspaceId);
         member.setUserId(user.getId());
         member.setRole(role);

@@ -65,7 +65,6 @@ public class TaskService {
         validateWorkspaceAndProjectAccess(workspaceId, projectId);
 
         Task task = new Task();
-        task.setId(UUID.randomUUID());
         task.setProjectId(projectId);
         task.setTitle(title);
         task.setDescription(description);
@@ -128,7 +127,6 @@ public class TaskService {
                 .orElseThrow(() -> new IllegalArgumentException("Task not found"));
 
         TaskComment comment = new TaskComment();
-        comment.setId(UUID.randomUUID());
         comment.setTaskId(taskId);
         comment.setUserId(userId);
         comment.setContent(content);
