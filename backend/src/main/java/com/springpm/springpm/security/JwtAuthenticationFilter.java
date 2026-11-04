@@ -32,6 +32,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
+        // Request threads are pooled: never start with, or leave behind, another request's user
+        TenantContext.clear();
         try {
             String jwt = extractJwtFromRequest(request);
 
@@ -65,8 +67,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (Exception ex) {
             log.error("Could not set user authentication in security context", ex);
-        } finally {
+            // A half-set context is worse than none: this request continues as anonymous
+            SecurityContextHolder.clearContext();
+            TenantContext.clear();
+        }
+
+        try {
             filterChain.doFilter(request, response);
+        } finally {
+            TenantContext.clear();
         }
     }
 

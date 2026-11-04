@@ -29,6 +29,11 @@ import java.util.List;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    private static final String UNAUTHORIZED_BODY =
+            "{\"success\":false,\"message\":\"Sign in to continue.\",\"code\":\"UNAUTHORIZED\"}";
+    private static final String FORBIDDEN_BODY =
+            "{\"success\":false,\"message\":\"You don't have access to this.\",\"code\":\"FORBIDDEN\"}";
+
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
 
@@ -77,14 +82,15 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        // The only CORS policy: controllers no longer add their own @CrossOrigin("*")
+        List<String> origins = Arrays.stream(allowedOrigins.split(",")).map(String::trim).filter(o -> !o.isEmpty()).toList();
         configuration.setAllowedOrigins(origins);
         configuration.setAllowCredentials(allowCredentials);
         
         List<String> methods = Arrays.asList(allowedMethods.split(","));
         configuration.setAllowedMethods(methods);
         
-        List<String> headers = Arrays.asList(allowedHeaders.split(","));
+        List<String> headers = Arrays.stream(allowedHeaders.split(",")).map(String::trim).toList();
         configuration.setAllowedHeaders(headers);
         
         configuration.setMaxAge(maxAge);
@@ -118,15 +124,16 @@ public class SecurityConfig {
             )
             .exceptionHandling(exception -> 
                 exception
+                    // Fixed bodies in the ApiResponse shape the web app reads; no exception text
                     .authenticationEntryPoint((request, response, authException) -> {
                         response.setStatus(401);
                         response.setContentType("application/json");
-                        response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"" + authException.getMessage() + "\"}");
+                        response.getWriter().write(UNAUTHORIZED_BODY);
                     })
                     .accessDeniedHandler((request, response, accessDeniedException) -> {
                         response.setStatus(403);
                         response.setContentType("application/json");
-                        response.getWriter().write("{\"error\":\"Forbidden\",\"message\":\"" + accessDeniedException.getMessage() + "\"}");
+                        response.getWriter().write(FORBIDDEN_BODY);
                     })
             );
 

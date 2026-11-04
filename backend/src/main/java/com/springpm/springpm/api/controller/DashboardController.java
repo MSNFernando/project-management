@@ -13,7 +13,6 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequestMapping("/workspaces/{workspaceId}/dashboard")
-@CrossOrigin(origins = "*")
 public class DashboardController {
 
     @Autowired
