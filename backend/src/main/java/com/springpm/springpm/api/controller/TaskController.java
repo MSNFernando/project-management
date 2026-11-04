@@ -14,7 +14,6 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequestMapping("/workspaces/{workspaceId}/projects/{projectId}/tasks")
-@CrossOrigin(origins = "*")
 public class TaskController {
 
     @Autowired
