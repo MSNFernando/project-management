@@ -65,7 +65,6 @@ public class ProjectService {
         UUID userId = TenantContext.getCurrentUserIdRequired();
 
         Project project = new Project();
-        project.setId(UUID.randomUUID());
         project.setWorkspaceId(workspaceId);
         project.setName(name);
         project.setDescription(description);
@@ -81,7 +80,6 @@ public class ProjectService {
 
         // Add creator as member
         ProjectMember member = new ProjectMember();
-        member.setId(UUID.randomUUID());
         member.setProjectId(project.getId());
         member.setUserId(userId);
         member.setJoinedAt(LocalDateTime.now());
@@ -160,7 +158,6 @@ public class ProjectService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         ProjectMember member = new ProjectMember();
-        member.setId(UUID.randomUUID());
         member.setProjectId(projectId);
         member.setUserId(userId);
         member.setJoinedAt(LocalDateTime.now());
