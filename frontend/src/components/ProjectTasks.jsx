@@ -13,10 +13,11 @@ const typeIcons = {
     OTHER: { icon: MessageSquare, color: "text-amber-600 dark:text-amber-400" },
 };
 
+// High reads as urgent (red), low as quiet (grey); the word is always shown too
 const priorityTexts = {
-    LOW: { background: "bg-red-100 dark:bg-red-950", prioritycolor: "text-red-600 dark:text-red-400" },
-    MEDIUM: { background: "bg-blue-100 dark:bg-blue-950", prioritycolor: "text-blue-600 dark:text-blue-400" },
-    HIGH: { background: "bg-emerald-100 dark:bg-emerald-950", prioritycolor: "text-emerald-600 dark:text-emerald-400" },
+    LOW: { background: "bg-zinc-100 dark:bg-zinc-800", prioritycolor: "text-zinc-700 dark:text-zinc-300" },
+    MEDIUM: { background: "bg-amber-100 dark:bg-amber-950", prioritycolor: "text-amber-800 dark:text-amber-300" },
+    HIGH: { background: "bg-red-100 dark:bg-red-950", prioritycolor: "text-red-700 dark:text-red-300" },
 };
 
 const ProjectTasks = ({ tasks, projectId, workspaceId, onRefresh }) => {

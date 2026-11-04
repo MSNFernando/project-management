@@ -60,6 +60,11 @@ export default function ProjectDetail() {
         CANCELLED: "bg-red-200 text-red-900 dark:bg-red-500 dark:text-red-900",
     };
 
+    const refreshTasks = async () => {
+        const data = await taskService.getTasks(workspaceId, id);
+        setTasks(data);
+    };
+
     if (loading) {
         return (
             <div className="max-w-6xl mx-auto flex items-center justify-center py-20">
@@ -117,7 +122,7 @@ export default function ProjectDetail() {
                 {[
                     { label: "Total Tasks", value: tasks.length, color: "text-zinc-900 dark:text-white" },
                     { label: "Completed", value: tasks.filter((t) => t.status === "DONE").length, color: "text-emerald-700 dark:text-emerald-400" },
-                    { label: "In Progress", value: tasks.filter((t) => t.status === "IN_PROGRESS" || t.status === "TODO").length, color: "text-amber-700 dark:text-amber-400" },
+                    { label: "In Progress", value: tasks.filter((t) => t.status === "IN_PROGRESS").length, color: "text-amber-700 dark:text-amber-400" },
                     { label: "Team Members", value: project.members?.length || 0, color: "text-blue-700 dark:text-blue-400" },
                 ].map((card, idx) => (
                     <div key={idx} className="dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-zinc-200 dark:border-zinc-800 flex justify-between sm:min-w-60 p-4 py-2.5 rounded">
@@ -156,10 +161,7 @@ export default function ProjectDetail() {
                 <div className="mt-6">
                     {activeTab === "tasks" && (
                         <div className="dark:bg-zinc-900/40 rounded max-w-6xl">
-                        <ProjectTasks tasks={tasks} projectId={id} workspaceId={workspaceId} onRefresh={async () => {
-                            const data = await taskService.getTasks(workspaceId, id);
-                            setTasks(data);
-                        }} />
+                        <ProjectTasks tasks={tasks} projectId={id} workspaceId={workspaceId} onRefresh={refreshTasks} />
                         </div>
                     )}
                     {activeTab === "analytics" && (
@@ -174,7 +176,7 @@ export default function ProjectDetail() {
                     )}
                     {activeTab === "settings" && (
                         <div className="dark:bg-zinc-900/40 rounded max-w-6xl">
-                            <ProjectSettings project={project} />
+                            <ProjectSettings project={project} onSaved={(updated) => updated && setProject(updated)} onMembersChanged={async () => setProject(await projectService.getProject(workspaceId, id))} />
                         </div>
                     )}
                 </div>
@@ -187,6 +189,7 @@ export default function ProjectDetail() {
                     setShowCreateTask={setShowCreateTask} 
                     projectId={id}
                     workspaceId={workspaceId}
+                    onCreated={refreshTasks}
                 />
             )}
         </div>

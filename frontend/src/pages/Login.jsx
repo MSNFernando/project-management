@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
@@ -9,6 +9,9 @@ import { fetchWorkspaces } from '../features/workspaceSlice';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Where ProtectedRoute was sending them before it asked them to sign in
+  const from = location.state?.from;
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -48,7 +51,7 @@ const Login = () => {
         
         dispatch(fetchWorkspaces());
         toast.success('Login successful!');
-        navigate('/');
+        navigate(from ? `${from.pathname}${from.search || ''}` : '/', { replace: true });
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed');

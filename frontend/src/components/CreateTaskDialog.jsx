@@ -2,17 +2,21 @@ import { useState, useEffect } from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { useSelector } from "react-redux";
 import { format } from "date-fns";
+import toast from "react-hot-toast";
 import projectService from "../services/projectService";
+import taskService from "../services/taskService";
 
-export default function CreateTaskDialog({ showCreateTask, setShowCreateTask, projectId }) {
+export default function CreateTaskDialog({ showCreateTask, setShowCreateTask, projectId, workspaceId: workspaceIdProp, onCreated }) {
     const currentWorkspace = useSelector((state) => state.workspace?.currentWorkspace || null);
+    // The project page knows its workspace from the URL; fall back to the selected one
+    const workspaceId = workspaceIdProp || currentWorkspace?.id;
     const [teamMembers, setTeamMembers] = useState([]);
 
     useEffect(() => {
         const fetchMembers = async () => {
-            if (!currentWorkspace?.id || !projectId) return;
+            if (!workspaceId || !projectId) return;
             try {
-                const members = await projectService.getMembers(currentWorkspace.id, projectId);
+                const members = await projectService.getMembers(workspaceId, projectId);
                 setTeamMembers(members || []);
             } catch (error) {
                 console.error('Failed to fetch project members:', error);
@@ -20,7 +24,7 @@ export default function CreateTaskDialog({ showCreateTask, setShowCreateTask, pr
             }
         };
         if (showCreateTask) fetchMembers();
-    }, [currentWorkspace?.id, projectId, showCreateTask]);
+    }, [workspaceId, projectId, showCreateTask]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
@@ -35,8 +39,31 @@ export default function CreateTaskDialog({ showCreateTask, setShowCreateTask, pr
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-
+        if (!workspaceId || !projectId) {
+            toast.error("Couldn't tell which project this task is for. Reload the page and try again.");
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            await taskService.createTask(workspaceId, projectId, {
+                title: formData.title.trim(),
+                description: formData.description.trim() || null,
+                type: formData.type,
+                status: formData.status,
+                priority: formData.priority,
+                assigneeId: formData.assigneeId || null,
+                // The API takes a date-time; a due date means the start of that day
+                dueDate: formData.dueDate ? `${formData.dueDate}T00:00:00` : null,
+            });
+            toast.success("Task created");
+            setFormData({ title: "", description: "", type: "TASK", status: "TODO", priority: "MEDIUM", assigneeId: "", dueDate: "" });
+            setShowCreateTask(false);
+            await onCreated?.();
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Couldn't create the task");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return showCreateTask ? (

@@ -1,11 +1,22 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+// Restore the session before the first render, so a refresh or a shared link
+// opens the page it points to instead of bouncing through /login to the dashboard.
+const storedSession = () => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (token && user) return { user, token, isAuthenticated: true };
+  } catch {
+    // Unreadable storage: start signed out.
+  }
+  return { user: null, token: null, isAuthenticated: false };
+};
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
-    user: null,
-    isAuthenticated: false,
-    token: null,
+    ...storedSession(),
     loading: false,
     error: null,
   },
