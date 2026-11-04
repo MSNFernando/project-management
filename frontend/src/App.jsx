@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Layout from "./pages/Layout";
@@ -13,6 +13,12 @@ import TaskDetails from "./pages/TaskDetails";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { setAuth } from "./features/authSlice";
 import { fetchWorkspaces } from "./features/workspaceSlice";
+
+// Signed in already: go where ProtectedRoute was sending them, or the dashboard
+const SignedInRedirect = () => {
+    const from = useLocation().state?.from;
+    return <Navigate to={from ? `${from.pathname}${from.search || ""}` : "/"} replace />;
+};
 
 const App = () => {
     const dispatch = useDispatch();
@@ -43,8 +49,8 @@ const App = () => {
             <Toaster />
             <Routes>
                 {/* Auth Routes */}
-                <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login />} />
-                <Route path="/signup" element={isAuthenticated ? <Navigate to="/" /> : <Signup />} />
+                <Route path="/login" element={isAuthenticated ? <SignedInRedirect /> : <Login />} />
+                <Route path="/signup" element={isAuthenticated ? <SignedInRedirect /> : <Signup />} />
 
                 {/* Protected Routes */}
                 <Route path="/" element={
