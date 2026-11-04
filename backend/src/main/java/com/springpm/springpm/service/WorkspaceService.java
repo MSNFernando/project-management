@@ -1,8 +1,10 @@
 package com.springpm.springpm.service;
 
+import com.springpm.springpm.entity.Role;
 import com.springpm.springpm.entity.Workspace;
 import com.springpm.springpm.entity.WorkspaceMember;
 import com.springpm.springpm.entity.User;
+import com.springpm.springpm.repository.RoleRepository;
 import com.springpm.springpm.repository.WorkspaceRepository;
 import com.springpm.springpm.repository.WorkspaceMemberRepository;
 import com.springpm.springpm.repository.UserRepository;
@@ -21,13 +23,24 @@ public class WorkspaceService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+
+    /** Roles every workspace has, with their descriptions. */
+    private static final Map<String, String> DEFAULT_ROLES = new LinkedHashMap<>();
+    static {
+        DEFAULT_ROLES.put("ADMIN", "Administrator with full access");
+        DEFAULT_ROLES.put("MEMBER", "Team member with standard access");
+        DEFAULT_ROLES.put("VIEWER", "View-only access");
+    }
 
     public WorkspaceService(WorkspaceRepository workspaceRepository,
                            WorkspaceMemberRepository workspaceMemberRepository,
-                           UserRepository userRepository) {
+                           UserRepository userRepository,
+                           RoleRepository roleRepository) {
         this.workspaceRepository = workspaceRepository;
         this.workspaceMemberRepository = workspaceMemberRepository;
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
     }
 
     /**
@@ -62,21 +75,25 @@ public class WorkspaceService {
      */
     public WorkspaceDTO createWorkspace(String name, String description) {
         UUID userId = TenantContext.getCurrentUserIdRequired();
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Workspace name is required");
+        }
 
         Workspace workspace = new Workspace();
-        workspace.setName(name);
-        workspace.setSlug(generateSlug(name));
+        workspace.setName(name.trim());
+        workspace.setSlug(uniqueSlug(name));
         workspace.setDescription(description);
         workspace.setOwnerId(userId);
         workspace.setCreatedAt(LocalDateTime.now());
         workspace.setUpdatedAt(LocalDateTime.now());
         workspace = workspaceRepository.save(workspace);
 
-        // Add owner as ADMIN
+        // Every workspace gets ADMIN, MEMBER and VIEWER roles; the owner is ADMIN
         WorkspaceMember member = new WorkspaceMember();
         member.setWorkspaceId(workspace.getId());
         member.setUserId(userId);
         member.setRole("ADMIN");
+        member.setRoleId(roleFor(workspace, "ADMIN").getId());
         member.setJoinedAt(LocalDateTime.now());
         workspaceMemberRepository.save(member);
 
@@ -149,10 +166,15 @@ public class WorkspaceService {
             throw new IllegalArgumentException("User already member of workspace");
         }
 
+        String roleName = normaliseRole(role);
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new IllegalArgumentException("Workspace not found"));
+
         WorkspaceMember member = new WorkspaceMember();
         member.setWorkspaceId(workspaceId);
         member.setUserId(user.getId());
-        member.setRole(role);
+        member.setRole(roleName);
+        member.setRoleId(roleFor(workspace, roleName).getId());
         member.setJoinedAt(LocalDateTime.now());
         member = workspaceMemberRepository.save(member);
 
@@ -169,7 +191,11 @@ public class WorkspaceService {
         WorkspaceMember member = workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not member of workspace"));
 
-        member.setRole(role);
+        String roleName = normaliseRole(role);
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new IllegalArgumentException("Workspace not found"));
+        member.setRole(roleName);
+        member.setRoleId(roleFor(workspace, roleName).getId());
         member = workspaceMemberRepository.save(member);
 
         User user = userRepository.findById(userId).orElse(null);
@@ -212,6 +238,40 @@ public class WorkspaceService {
 
     private String generateSlug(String name) {
         return name.toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
+    }
+
+    /** Slugs are unique across all workspaces, so add -2, -3, … when one is taken. */
+    private String uniqueSlug(String name) {
+        String base = generateSlug(name);
+        if (base.isEmpty()) {
+            base = "workspace";
+        }
+        String slug = base;
+        int n = 2;
+        while (workspaceRepository.findBySlug(slug).isPresent()) {
+            slug = base + "-" + n++;
+        }
+        return slug;
+    }
+
+    /** ADMIN, MEMBER or VIEWER; MEMBER when none is given. */
+    private String normaliseRole(String role) {
+        String name = (role == null || role.isBlank()) ? "MEMBER" : role.trim().toUpperCase(Locale.ROOT);
+        if (!DEFAULT_ROLES.containsKey(name)) {
+            throw new IllegalArgumentException("Role must be one of " + String.join(", ", DEFAULT_ROLES.keySet()));
+        }
+        return name;
+    }
+
+    /** The workspace's role with this name, creating the default roles if the workspace has none yet. */
+    private Role roleFor(Workspace workspace, String roleName) {
+        return roleRepository.findByWorkspaceIdAndName(workspace.getId(), roleName)
+                .orElseGet(() -> roleRepository.save(Role.builder()
+                        .workspace(workspace)
+                        .name(roleName)
+                        .description(DEFAULT_ROLES.get(roleName))
+                        .createdAt(LocalDateTime.now())
+                        .build()));
     }
 
     private WorkspaceDTO convertToDTO(Workspace workspace) {

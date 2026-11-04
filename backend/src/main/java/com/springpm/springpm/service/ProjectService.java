@@ -229,7 +229,7 @@ public class ProjectService {
         List<ProjectMember> members = projectMemberRepository.findByProjectId(project.getId());
         long taskCount = taskRepository.countByProjectId(project.getId());
 
-        return new ProjectDTO(
+        ProjectDTO dto = new ProjectDTO(
                 project.getId(),
                 project.getWorkspaceId(),
                 project.getName(),
@@ -245,6 +245,20 @@ public class ProjectService {
                 project.getCreatedAt(),
                 project.getUpdatedAt()
         );
+
+        // The web app reads project.members[].user.{id,name,email}
+        Map<UUID, User> users = userRepository.findAllById(
+                members.stream().map(ProjectMember::getUserId).collect(Collectors.toSet()))
+                .stream().collect(Collectors.toMap(User::getId, u -> u));
+        dto.members = members.stream()
+                .map(m -> {
+                    User u = users.get(m.getUserId());
+                    return new MemberSummary(m.getId(), m.getUserId(),
+                            new UserSummary(m.getUserId(), u != null ? u.getName() : null, u != null ? u.getEmail() : null),
+                            m.getJoinedAt());
+                })
+                .collect(Collectors.toList());
+        return dto;
     }
 
     private ProjectMemberDTO convertMemberToDTO(ProjectMember member, User user) {
@@ -271,6 +285,7 @@ public class ProjectService {
         public LocalDateTime startDate;
         public LocalDateTime endDate;
         public int memberCount;
+        public List<MemberSummary> members = new ArrayList<>();
         public int taskCount;
         public LocalDateTime createdAt;
         public LocalDateTime updatedAt;
@@ -317,6 +332,10 @@ public class ProjectService {
         public UUID getUserId() { return userId; }
         public String getUserName() { return userName; }
     }
+
+    public record UserSummary(UUID id, String name, String email) {}
+
+    public record MemberSummary(UUID id, UUID userId, UserSummary user, LocalDateTime joinedAt) {}
 
     public static class ProjectAnalyticsDTO {
         public UUID projectId;

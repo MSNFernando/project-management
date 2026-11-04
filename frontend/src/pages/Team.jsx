@@ -19,6 +19,8 @@ const Team = () => {
             user?.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const [reloadKey, setReloadKey] = useState(0);
+
     useEffect(() => {
         if (!currentWorkspace?.id) return;
 
@@ -36,7 +38,7 @@ const Team = () => {
         };
 
         fetchMembers();
-    }, [currentWorkspace?.id]);
+    }, [currentWorkspace?.id, reloadKey]);
 
     if (loading) {
         return (
@@ -65,7 +67,7 @@ const Team = () => {
                 >
                     <UserPlus className="w-4 h-4 mr-2" /> Invite Member
                 </button>
-                <InviteMemberDialog isDialogOpen={isDialogOpen} setIsDialogOpen={setIsDialogOpen} />
+                <InviteMemberDialog isDialogOpen={isDialogOpen} setIsDialogOpen={setIsDialogOpen} onInvited={() => setReloadKey((k) => k + 1)} />
             </div>
 
             {/* Stats Cards */}
