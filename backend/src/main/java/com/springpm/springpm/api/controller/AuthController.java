@@ -80,6 +80,16 @@ public class AuthController {
     }
 
     /**
+     * Sign out: revoke the refresh token so it can't be used again.
+     * POST /auth/logout  { "token": "<refresh token>" }
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestBody(required = false) TokenRefreshRequest request) {
+        authService.logout(request != null ? request.getToken() : null);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * Get current user profile
      * GET /api/auth/me
      */
