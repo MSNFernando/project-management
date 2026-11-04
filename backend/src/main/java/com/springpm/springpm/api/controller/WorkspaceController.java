@@ -13,7 +13,6 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequestMapping("/workspaces")
-@CrossOrigin(origins = "*")
 public class WorkspaceController {
 
     @Autowired
@@ -25,14 +24,9 @@ public class WorkspaceController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<WorkspaceService.WorkspaceDTO>>> getAllWorkspaces() {
-        try {
-            List<WorkspaceService.WorkspaceDTO> workspaces = workspaceService.getAllWorkspacesForCurrentUser();
-            return ResponseEntity.ok(ApiResponse.success(workspaces));
-        } catch (Exception e) {
-            log.error("Error fetching workspaces", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error(e.getMessage(), "FETCH_WORKSPACES_FAILED"));
-        }
+        // Unexpected errors go to GlobalExceptionHandler, which logs them and hides the detail
+        List<WorkspaceService.WorkspaceDTO> workspaces = workspaceService.getAllWorkspacesForCurrentUser();
+        return ResponseEntity.ok(ApiResponse.success(workspaces));
     }
 
     /**
@@ -60,8 +54,7 @@ public class WorkspaceController {
             WorkspaceService.WorkspaceDTO workspace = workspaceService.createWorkspace(request.name, request.description);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success(workspace));
-        } catch (Exception e) {
-            log.error("Error creating workspace", e);
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error(e.getMessage(), "CREATE_WORKSPACE_FAILED"));
         }

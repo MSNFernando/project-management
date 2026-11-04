@@ -10,6 +10,7 @@ import com.springpm.springpm.api.dto.request.RegisterRequest;
 import com.springpm.springpm.api.dto.response.AuthResponse;
 import com.springpm.springpm.api.dto.response.UserDTO;
 import com.springpm.springpm.service.AuthService;
+import com.springpm.springpm.exception.UnauthorizedException;
 import com.springpm.springpm.util.ApiResponse;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -17,7 +18,6 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class AuthController {
 
     @Autowired
@@ -57,9 +57,13 @@ public class AuthController {
         try {
             AuthResponse authResp = authService.login(request);
             return ResponseEntity.ok(ApiResponse.success(authResp));
-        } catch (Exception e) {
+        } catch (UnauthorizedException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error(e.getMessage(), "LOGIN_FAILED"));
+        } catch (IllegalArgumentException e) {
+            // e.g. a missing password; don't echo the library's message
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Invalid email or password", "LOGIN_FAILED"));
         }
     }
 
@@ -73,7 +77,7 @@ public class AuthController {
         try {
             AuthResponse refreshResp = authService.refreshToken(request.getToken());
             return ResponseEntity.ok(ApiResponse.success(refreshResp));
-        } catch (Exception e) {
+        } catch (UnauthorizedException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error(e.getMessage(), "TOKEN_REFRESH_FAILED"));
         }
@@ -98,9 +102,10 @@ public class AuthController {
         try {
             UserDTO userDTO = authService.getCurrentUser();
             return ResponseEntity.ok(ApiResponse.success(userDTO));
-        } catch (Exception e) {
+        } catch (UnauthorizedException | IllegalStateException e) {
+            // IllegalStateException: no signed-in user on this request
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error(e.getMessage(), "UNAUTHORIZED"));
+                    .body(ApiResponse.error("Sign in to continue.", "UNAUTHORIZED"));
         }
     }
 
