@@ -22,18 +22,25 @@ public class JwtTokenProvider {
     @Value("${app.jwt.refresh-expiration}")
     private long refreshTokenExpirationMs;
 
+    /** Claim that marks a JWT as an access token. Refresh tokens are not JWTs at all. */
+    public static final String TOKEN_TYPE_CLAIM = "typ";
+    public static final String ACCESS_TOKEN_TYPE = "access";
+
     /**
-     * Generate JWT token for user
+     * Generate an access token (a JWT) for a user.
      */
     public String generateToken(String userId, String email, String workspaceId, String role) {
         return createToken(userId, email, workspaceId, role, jwtExpirationMs);
     }
 
-    /**
-     * Generate refresh token
-     */
-    public String generateRefreshToken(String userId, String email) {
-        return createToken(userId, email, null, null, refreshTokenExpirationMs);
+    /** How long an access token lasts, in seconds. */
+    public long getAccessTokenExpirySeconds() {
+        return jwtExpirationMs / 1000;
+    }
+
+    /** How long a refresh token lasts, in milliseconds. */
+    public long getRefreshTokenExpirationMs() {
+        return refreshTokenExpirationMs;
     }
 
     /**
@@ -41,6 +48,7 @@ public class JwtTokenProvider {
      */
     private String createToken(String userId, String email, String workspaceId, String role, long expirationTime) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put(TOKEN_TYPE_CLAIM, ACCESS_TOKEN_TYPE);
         claims.put("userId", userId);
         claims.put("email", email);
         if (workspaceId != null) {
@@ -105,6 +113,17 @@ public class JwtTokenProvider {
             log.debug("JWT claims string is empty: {}", e.getMessage());
         }
         return false;
+    }
+
+    /**
+     * True only for a valid, unexpired access token. A token without the access type
+     * (such as a refresh JWT issued before refresh tokens became opaque) is refused.
+     */
+    public boolean validateAccessToken(String token) {
+        if (!validateToken(token)) {
+            return false;
+        }
+        return ACCESS_TOKEN_TYPE.equals(extractClaims(token).get(TOKEN_TYPE_CLAIM, String.class));
     }
 
     /**

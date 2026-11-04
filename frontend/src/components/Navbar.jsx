@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { toggleTheme } from '../features/themeSlice'
 import { logout } from '../features/authSlice'
+import { revokeSession } from '../services/api'
 import { MoonIcon, SunIcon } from 'lucide-react'
 import { assets } from '../assets/assets'
 import { useState } from 'react'
@@ -15,7 +16,8 @@ const Navbar = ({ setIsSidebarOpen }) => {
     const { user } = useSelector(state => state.auth);
     const [showUserMenu, setShowUserMenu] = useState(false);
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        await revokeSession(); // the refresh token stops working on the server too
         dispatch(logout());
         navigate('/login');
     };
